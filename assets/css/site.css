@@ -175,3 +175,5 @@ section{padding:110px 0}
 .skip:focus{left:16px;top:16px;z-index:100;background:#fff;padding:10px 14px}
 .prose .tags{padding-left:0}
 .site-footer .ph,.band-ink .ph,.film-copy .ph{color:var(--ink)}
+.film-canvas{position:absolute;inset:0;width:100%;height:100%;opacity:0;transition:opacity .6s}
+.film-canvas.ready{opacity:1}

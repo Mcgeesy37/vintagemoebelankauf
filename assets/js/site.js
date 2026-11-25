@@ -20,13 +20,17 @@
     document.querySelectorAll(".reveal").forEach(function(el){io.observe(el);});
   }else{document.querySelectorAll(".reveal").forEach(function(el){el.classList.add("in");});}
 
-  /* Scroll film: video time follows scroll position */
+  /* Scroll film: frame sequence on canvas (fallback: video) */
   var film=document.querySelector(".film");
   if(film){
+    var stage=film.querySelector(".film-stage");
     var video=film.querySelector("video");
     var copies=film.querySelectorAll(".film-copy,.film-hint");
     var reduce=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    var target=0,current=0,ready=false;
+    var count=parseInt(film.dataset.frames||"0",10);
+    var base=film.dataset.framePath||"";
+    var mobile=window.matchMedia("(max-width: 760px)").matches;
+    var dir=mobile&&film.dataset.framePathMobile?film.dataset.framePathMobile:base;
     function progress(){
       var r=film.getBoundingClientRect();
       var total=film.offsetHeight-window.innerHeight;
@@ -38,25 +42,61 @@
         if(p>=from&&p<=to)c.removeAttribute("data-hidden");else c.setAttribute("data-hidden","");
       });
     }
-    if(video){
-      video.muted=true;video.playsInline=true;
-      video.addEventListener("loadedmetadata",function(){ready=true;video.pause();});
-      if(video.readyState>=1){ready=true;}
-      /* iOS needs a play call before seeking works */
-      var unlock=function(){var pr=video.play();if(pr&&pr.then){pr.then(function(){video.pause();}).catch(function(){});}window.removeEventListener("touchstart",unlock);};
-      window.addEventListener("touchstart",unlock,{passive:true});
-    }
-    function tick(){
-      var p=progress();
-      updateCopy(p);
-      if(video&&ready&&video.duration&&!reduce){
-        target=p*(video.duration-0.05);
-        current+=(target-current)*0.12;
-        if(Math.abs(video.currentTime-current)>0.02){try{video.currentTime=current;}catch(e){}}
+    if(count>0&&dir){
+      if(video)video.remove();
+      var canvas=document.createElement("canvas");
+      canvas.className="film-canvas";canvas.setAttribute("aria-hidden","true");
+      var poster=stage.querySelector(".film-poster");if(poster)poster.insertAdjacentElement("afterend",canvas);else stage.insertBefore(canvas,stage.firstChild);
+      var ctx=canvas.getContext("2d");
+      var frames=new Array(count),loaded=new Array(count);
+      var pad=function(n){return ("000"+n).slice(-3);};
+      function load(i){
+        if(frames[i])return;
+        var img=new Image();img.decoding="async";
+        img.onload=function(){loaded[i]=true;if(i===0)canvas.classList.add("ready");};
+        img.src=dir+"f_"+pad(i+1)+".webp";frames[i]=img;
       }
-      requestAnimationFrame(tick);
+      /* coarse pass first, then fill gaps */
+      load(0);
+      [8,4,2,1].forEach(function(step){for(var i=0;i<count;i+=step)load(i);});
+      function nearest(i){
+        if(loaded[i])return i;
+        for(var d=1;d<count;d++){if(i-d>=0&&loaded[i-d])return i-d;if(i+d<count&&loaded[i+d])return i+d;}
+        return -1;
+      }
+      var cur=0,last=-1,dpr=Math.min(window.devicePixelRatio||1,2);
+      function size(){canvas.width=stage.clientWidth*dpr;canvas.height=stage.clientHeight*dpr;last=-1;}
+      window.addEventListener("resize",size);size();
+      function draw(i){
+        var img=frames[i];if(!img)return;
+        var cw=canvas.width,ch=canvas.height,iw=img.naturalWidth,ih=img.naturalHeight;
+        var s=Math.max(cw/iw,ch/ih),w=iw*s,h=ih*s;
+        ctx.drawImage(img,(cw-w)/2,(ch-h)/2,w,h);
+      }
+      (function tick(){
+        var p=progress();updateCopy(p);
+        var target=reduce?0:p*(count-1);
+        cur+=(target-cur)*0.18;
+        var idx=nearest(Math.round(cur));
+        if(idx>=0&&idx!==last){draw(idx);last=idx;}
+        requestAnimationFrame(tick);
+      })();
+    }else{
+      var target=0,current=0,ready=false;
+      if(video){
+        video.muted=true;video.playsInline=true;
+        video.addEventListener("loadedmetadata",function(){ready=true;video.pause();});
+        if(video.readyState>=1)ready=true;
+      }
+      (function tick(){
+        var p=progress();updateCopy(p);
+        if(video&&ready&&video.duration&&!reduce){
+          target=p*(video.duration-0.05);current+=(target-current)*0.12;
+          if(Math.abs(video.currentTime-current)>0.04&&!video.seeking){try{video.currentTime=current;}catch(e){}}
+        }
+        requestAnimationFrame(tick);
+      })();
     }
-    requestAnimationFrame(tick);
   }
 
   /* Ankaufsanfrage: builds a WhatsApp message, falls back to e-mail */
