@@ -70,8 +70,10 @@
       function draw(i){
         var img=frames[i];if(!img)return;
         var cw=canvas.width,ch=canvas.height,iw=img.naturalWidth,ih=img.naturalHeight;
-        var s=Math.max(cw/iw,ch/ih),w=iw*s,h=ih*s;
-        ctx.drawImage(img,(cw-w)/2,(ch-h)/2,w,h);
+        var portrait=cw/ch<1;
+        var s=portrait?(cw/iw)*1.3:Math.max(cw/iw,ch/ih),w=iw*s,h=ih*s;
+        if(portrait){ctx.fillStyle="#14110d";ctx.fillRect(0,0,cw,ch);}
+        ctx.drawImage(img,(cw-w)/2,(ch-h)*(portrait?0.62:0.5),w,h);
       }
       (function tick(){
         var p=progress();updateCopy(p);

@@ -177,3 +177,18 @@ section{padding:110px 0}
 .site-footer .ph,.band-ink .ph,.film-copy .ph{color:var(--ink)}
 .film-canvas{position:absolute;inset:0;width:100%;height:100%;opacity:0;transition:opacity .6s}
 .film-canvas.ready{opacity:1}
+body:has(.film) .site-header:not(.solid){color:#fbf6ec}
+body:has(.film) .site-header:not(.solid) .brand small{color:#e9c9a4}
+body:has(.film) .site-header:not(.solid) .btn-dark{background:rgba(251,246,236,.14);color:#fbf6ec;border-color:rgba(251,246,236,.35)}
+@media (max-width:760px){
+  .film-copy.top{top:12vh}
+  .film-copy.top p{display:none}
+  .film-hint{bottom:96px}
+}
+.film-copy em{color:#f2c995}
+.film-stage::after{background:linear-gradient(180deg,rgba(20,17,13,.6) 0%,rgba(20,17,13,.34) 30%,rgba(20,17,13,.06) 55%,rgba(20,17,13,.7) 100%)}
+.menu-toggle{color:inherit;font-weight:600}
+@media (max-width:420px){.brand{font-size:1.08rem}.site-header .wrap{padding:0 18px}}
+.footer-grid>*{min-width:0}
+.site-footer,.card,.prose{overflow-wrap:anywhere}
+@media (max-width:520px){.footer-grid{grid-template-columns:1fr}}
